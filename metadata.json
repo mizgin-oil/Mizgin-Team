@@ -1,0 +1,7 @@
+{
+  "name": "Mizgin Employee Management",
+  "description": "A professional employee time-tracking and management system for Mizgin Oil, featuring admin control panels and employee check-in/out workflows.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

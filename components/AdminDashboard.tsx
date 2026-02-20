@@ -1,0 +1,298 @@
+
+import React, { useState } from 'react';
+import { AppState, Employee, JobCategory, WorkLog } from '../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { WorkCalendar } from './WorkCalendar';
+
+interface Props {
+  state: AppState;
+  onUpdate: (newState: AppState) => void;
+}
+
+export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
+  const [activeTab, setActiveTab] = useState<'employees' | 'categories' | 'reports'>('employees');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  
+  // Forms
+  const [newCat, setNewCat] = useState('');
+  const [empForm, setEmpForm] = useState({ name: '', jobTitle: '', categoryId: '', email: '', password: '' });
+
+  const addCategory = () => {
+    if (!newCat) return;
+    const cat: JobCategory = { id: Date.now().toString(), name: newCat };
+    onUpdate({ ...state, categories: [...state.categories, cat] });
+    setNewCat('');
+  };
+
+  const addEmployee = () => {
+    if (!empForm.name || !empForm.email || !empForm.password || !empForm.categoryId) {
+      alert("Please fill all fields");
+      return;
+    }
+    const emp: Employee = { ...empForm, id: Date.now().toString(), role: 'employee' };
+    onUpdate({ ...state, employees: [...state.employees, emp] });
+    setEmpForm({ name: '', jobTitle: '', categoryId: '', email: '', password: '' });
+  };
+
+  const calculateHours = (logs: WorkLog[]) => {
+    return logs.reduce((acc, log) => {
+      if (log.checkIn && log.checkOut) {
+        return acc + (new Date(log.checkOut).getTime() - new Date(log.checkIn).getTime()) / (1000 * 60 * 60);
+      }
+      return acc;
+    }, 0);
+  };
+
+  const reportData = state.employees.map(emp => ({
+    name: emp.name,
+    hours: parseFloat(calculateHours(state.workLogs.filter(l => l.employeeId === emp.id)).toFixed(2))
+  }));
+
+  const selectedEmployee = state.employees.find(e => e.id === selectedEmployeeId);
+  const employeeLogs = state.workLogs.filter(l => l.employeeId === selectedEmployeeId);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+          {(['employees', 'categories', 'reports'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); setSelectedEmployeeId(null); }}
+              className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
+                activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        
+        {selectedEmployeeId && (
+          <button 
+            onClick={() => setSelectedEmployeeId(null)}
+            className="flex items-center text-blue-600 font-bold text-sm hover:underline"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to List
+          </button>
+        )}
+      </div>
+
+      {activeTab === 'categories' && (
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-2xl">
+          <h2 className="text-xl font-black text-slate-800 mb-6">Job Classifications</h2>
+          <div className="flex space-x-3 mb-8">
+            <input
+              type="text"
+              placeholder="e.g. Field Engineering, Logistics"
+              className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+              value={newCat}
+              onChange={e => setNewCat(e.target.value)}
+            />
+            <button onClick={addCategory} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+              Add Category
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {state.categories.map(c => (
+              <div key={c.id} className="p-4 bg-slate-50 rounded-xl flex justify-between items-center border border-slate-100 group">
+                <span className="font-bold text-slate-700">{c.name}</span>
+                <button 
+                  onClick={() => onUpdate({...state, categories: state.categories.filter(x => x.id !== c.id)})}
+                  className="text-slate-300 hover:text-red-500 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'employees' && !selectedEmployeeId && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 h-fit">
+            <h2 className="text-xl font-black text-slate-800 mb-6">Onboard New Talent</h2>
+            <div className="space-y-4">
+              <input type="text" placeholder="Full Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.name} onChange={e => setEmpForm({...empForm, name: e.target.value})} />
+              <input type="text" placeholder="Job Title" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.jobTitle} onChange={e => setEmpForm({...empForm, jobTitle: e.target.value})} />
+              <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.categoryId} onChange={e => setEmpForm({...empForm, categoryId: e.target.value})}>
+                <option value="">Select Category</option>
+                {state.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <input type="email" placeholder="Email Address" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.email} onChange={e => setEmpForm({...empForm, email: e.target.value})} />
+              <input type="password" placeholder="Password" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.password} onChange={e => setEmpForm({...empForm, password: e.target.value})} />
+              <button onClick={addEmployee} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-sm hover:bg-slate-800 transition shadow-lg">
+                Register Employee
+              </button>
+            </div>
+          </div>
+
+          <div className="xl:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-xl font-black text-slate-800">Team Directory</h2>
+              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">{state.employees.length} Staff members</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-widest border-b border-slate-100">
+                  <tr>
+                    <th className="px-8 py-4">Employee</th>
+                    <th className="px-8 py-4">Status</th>
+                    <th className="px-8 py-4">Category</th>
+                    <th className="px-8 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {state.employees.map(emp => {
+                    const isOnline = state.workLogs.some(l => l.employeeId === emp.id && !l.checkOut);
+                    return (
+                      <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-slate-400">{emp.name.charAt(0)}</div>
+                            <div>
+                              <p className="font-bold text-slate-800">{emp.name}</p>
+                              <p className="text-xs text-slate-400">{emp.jobTitle}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          {isOnline ? (
+                            <span className="flex items-center text-green-600 font-black text-[10px] uppercase">
+                              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                              On Duty
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-bold text-[10px] uppercase">Away</span>
+                          )}
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[10px] font-black uppercase">
+                            {state.categories.find(c => c.id === emp.categoryId)?.name || 'General'}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right space-x-3">
+                          <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-xs uppercase hover:underline">View Logs</button>
+                          <button onClick={() => onUpdate({...state, employees: state.employees.filter(x => x.id !== emp.id)})} className="text-red-300 hover:text-red-500 transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {state.employees.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">No active personnel records.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedEmployeeId && selectedEmployee && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-1 space-y-8">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center font-black text-3xl mx-auto mb-4">{selectedEmployee.name.charAt(0)}</div>
+                <h2 className="text-2xl font-black text-slate-800">{selectedEmployee.name}</h2>
+                <p className="text-slate-500 font-medium">{selectedEmployee.jobTitle}</p>
+                <p className="text-xs text-slate-400 mt-1 uppercase font-black tracking-widest">{selectedEmployee.email}</p>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase">Total Hours</span>
+                  <span className="text-xl font-black text-blue-600">{calculateHours(employeeLogs).toFixed(1)}h</span>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase">Total Sessions</span>
+                  <span className="text-xl font-black text-slate-800">{employeeLogs.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="xl:col-span-2 space-y-8">
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+              <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Attendance Calendar
+              </h3>
+              <WorkCalendar logs={employeeLogs} />
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-6 border-b border-slate-100">
+                <h3 className="text-lg font-black text-slate-800">Complete History</h3>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-widest border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-4">Check In</th>
+                      <th className="px-6 py-4">Check Out</th>
+                      <th className="px-6 py-4 text-right">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {employeeLogs.slice().reverse().map(log => (
+                      <tr key={log.id}>
+                        <td className="px-6 py-4 font-bold text-slate-700">{new Date(log.checkIn).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-slate-500">{log.checkOut ? new Date(log.checkOut).toLocaleString() : <span className="text-green-600 font-black uppercase text-[10px]">Active</span>}</td>
+                        <td className="px-6 py-4 text-right font-black text-blue-600">
+                          {log.checkOut ? ((new Date(log.checkOut).getTime() - new Date(log.checkIn).getTime()) / (1000 * 60 * 60)).toFixed(1) + 'h' : '--'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'reports' && (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+              <h2 className="text-xl font-black text-slate-800 mb-8">Productivity Matrix</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={reportData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                    <YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                    <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                    <Bar dataKey="hours" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+              <h2 className="text-xl font-black text-slate-800 mb-6">Real-time Activity Log</h2>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                {state.workLogs.slice(-10).reverse().map(log => {
+                  const emp = state.employees.find(e => e.id === log.employeeId);
+                  return (
+                    <div key={log.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div>
+                        <p className="font-bold text-slate-800 text-sm">{emp?.name || 'Unknown'}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{new Date(log.checkIn).toLocaleString()}</p>
+                      </div>
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${!log.checkOut ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}>
+                        {!log.checkOut ? 'In' : 'Out'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
