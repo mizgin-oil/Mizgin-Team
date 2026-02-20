@@ -1,6 +1,6 @@
 {
-  "name": "Mizgin Employee Management",
-  "description": "A professional employee time-tracking and management system for Mizgin Oil, featuring admin control panels and employee check-in/out workflows.",
+  "name": "Mizgin Team",
+  "description": "A professional employee time-tracking and management system for Mizgin Oil's team, featuring admin control panels and employee check-in/out workflows.",
   "requestFramePermissions": [
     "geolocation"
   ]
