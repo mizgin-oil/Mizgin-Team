@@ -3,17 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { AppState, Employee, WorkLog } from '../types';
 import { analyzeWorkEfficiency } from '../services/geminiService';
 import { WorkCalendar } from './WorkCalendar';
+import { supabase } from '../services/supabase';
 
 interface Props {
   state: AppState;
   user: Employee;
-  onUpdate: (newState: AppState) => void;
+  onUpdate: () => void;
 }
 
 export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [analysis, setAnalysis] = useState<{summary: string, totalHours: number, insight: string} | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -32,7 +34,6 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
     }, 0);
   };
 
-  // Weekly Stats (Sun-Sat)
   const getWeeklyHours = () => {
     const now = new Date();
     const firstDay = new Date(now.setDate(now.getDate() - now.getDay()));
@@ -41,7 +42,6 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
     return calculateHours(weekLogs);
   };
 
-  // Monthly Stats
   const getMonthlyHours = () => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -49,20 +49,22 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
     return calculateHours(monthLogs);
   };
 
-  const handleCheckInOut = () => {
+  const handleCheckInOut = async () => {
+    setIsProcessing(true);
     if (currentSession) {
-      const updatedLogs = state.workLogs.map(l => 
-        l.id === currentSession.id ? { ...l, checkOut: new Date().toISOString() } : l
-      );
-      onUpdate({ ...state, workLogs: updatedLogs });
+      const { error } = await supabase
+        .from('work_logs')
+        .update({ checkOut: new Date().toISOString() })
+        .eq('id', currentSession.id);
+      if (error) alert(error.message);
     } else {
-      const newLog: WorkLog = {
-        id: Date.now().toString(),
-        employeeId: user.id,
-        checkIn: new Date().toISOString()
-      };
-      onUpdate({ ...state, workLogs: [...state.workLogs, newLog] });
+      const { error } = await supabase
+        .from('work_logs')
+        .insert([{ employeeId: user.id, checkIn: new Date().toISOString() }]);
+      if (error) alert(error.message);
     }
+    onUpdate();
+    setIsProcessing(false);
   };
 
   const getAnalysis = async () => {
@@ -87,14 +89,15 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
           <div className="flex flex-col items-center">
             <button
               onClick={handleCheckInOut}
-              className={`w-44 h-44 rounded-full border-8 transition-all flex flex-col items-center justify-center space-y-1 shadow-lg active:scale-95 ${
+              disabled={isProcessing}
+              className={`w-44 h-44 rounded-full border-8 transition-all flex flex-col items-center justify-center space-y-1 shadow-lg active:scale-95 disabled:opacity-50 ${
                 currentSession 
                 ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
                 : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'
               }`}
             >
               <span className="text-2xl font-black uppercase tracking-widest">
-                {currentSession ? 'Check Out' : 'Check In'}
+                {isProcessing ? 'Wait...' : (currentSession ? 'Check Out' : 'Check In')}
               </span>
               <span className="text-[10px] font-bold opacity-60">Session Control</span>
             </button>

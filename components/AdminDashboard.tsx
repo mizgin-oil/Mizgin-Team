@@ -3,35 +3,61 @@ import React, { useState } from 'react';
 import { AppState, Employee, JobCategory, WorkLog } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { WorkCalendar } from './WorkCalendar';
+import { supabase } from '../services/supabase';
 
 interface Props {
   state: AppState;
-  onUpdate: (newState: AppState) => void;
+  onUpdate: () => void;
 }
 
 export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'employees' | 'categories' | 'reports'>('employees');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Forms
   const [newCat, setNewCat] = useState('');
   const [empForm, setEmpForm] = useState({ name: '', jobTitle: '', categoryId: '', email: '', password: '' });
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCat) return;
-    const cat: JobCategory = { id: Date.now().toString(), name: newCat };
-    onUpdate({ ...state, categories: [...state.categories, cat] });
-    setNewCat('');
+    setIsProcessing(true);
+    const { error } = await supabase.from('categories').insert([{ name: newCat }]);
+    if (error) alert(error.message);
+    else {
+      setNewCat('');
+      onUpdate();
+    }
+    setIsProcessing(false);
   };
 
-  const addEmployee = () => {
+  const removeCategory = async (id: string) => {
+    if (!confirm('Remove this category?')) return;
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) alert(error.message);
+    else onUpdate();
+  };
+
+  const addEmployee = async () => {
     if (!empForm.name || !empForm.email || !empForm.password || !empForm.categoryId) {
       alert("Please fill all fields");
       return;
     }
-    const emp: Employee = { ...empForm, id: Date.now().toString(), role: 'employee' };
-    onUpdate({ ...state, employees: [...state.employees, emp] });
-    setEmpForm({ name: '', jobTitle: '', categoryId: '', email: '', password: '' });
+    setIsProcessing(true);
+    const { error } = await supabase.from('employees').insert([{ ...empForm, role: 'employee' }]);
+    if (error) alert(error.message);
+    else {
+      setEmpForm({ name: '', jobTitle: '', categoryId: '', email: '', password: '' });
+      onUpdate();
+    }
+    setIsProcessing(false);
+  };
+
+  const removeEmployee = async (id: string) => {
+    if (!confirm('Permanently remove this employee?')) return;
+    const { error } = await supabase.from('employees').delete().eq('id', id);
+    if (error) alert(error.message);
+    else onUpdate();
   };
 
   const calculateHours = (logs: WorkLog[]) => {
@@ -89,9 +115,14 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
               className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
               value={newCat}
               onChange={e => setNewCat(e.target.value)}
+              disabled={isProcessing}
             />
-            <button onClick={addCategory} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition">
-              Add Category
+            <button 
+              onClick={addCategory} 
+              disabled={isProcessing}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {isProcessing ? 'Adding...' : 'Add Category'}
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -99,7 +130,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
               <div key={c.id} className="p-4 bg-slate-50 rounded-xl flex justify-between items-center border border-slate-100 group">
                 <span className="font-bold text-slate-700">{c.name}</span>
                 <button 
-                  onClick={() => onUpdate({...state, categories: state.categories.filter(x => x.id !== c.id)})}
+                  onClick={() => removeCategory(c.id)}
                   className="text-slate-300 hover:text-red-500 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -115,16 +146,16 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
           <div className="xl:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 h-fit">
             <h2 className="text-xl font-black text-slate-800 mb-6">Onboard New Talent</h2>
             <div className="space-y-4">
-              <input type="text" placeholder="Full Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.name} onChange={e => setEmpForm({...empForm, name: e.target.value})} />
-              <input type="text" placeholder="Job Title" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.jobTitle} onChange={e => setEmpForm({...empForm, jobTitle: e.target.value})} />
-              <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.categoryId} onChange={e => setEmpForm({...empForm, categoryId: e.target.value})}>
+              <input type="text" placeholder="Full Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.name} onChange={e => setEmpForm({...empForm, name: e.target.value})} disabled={isProcessing} />
+              <input type="text" placeholder="Job Title" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.jobTitle} onChange={e => setEmpForm({...empForm, jobTitle: e.target.value})} disabled={isProcessing} />
+              <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.categoryId} onChange={e => setEmpForm({...empForm, categoryId: e.target.value})} disabled={isProcessing}>
                 <option value="">Select Category</option>
                 {state.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <input type="email" placeholder="Email Address" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.email} onChange={e => setEmpForm({...empForm, email: e.target.value})} />
-              <input type="password" placeholder="Password" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.password} onChange={e => setEmpForm({...empForm, password: e.target.value})} />
-              <button onClick={addEmployee} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-sm hover:bg-slate-800 transition shadow-lg">
-                Register Employee
+              <input type="email" placeholder="Email Address" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.email} onChange={e => setEmpForm({...empForm, email: e.target.value})} disabled={isProcessing} />
+              <input type="password" placeholder="Password" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={empForm.password} onChange={e => setEmpForm({...empForm, password: e.target.value})} disabled={isProcessing} />
+              <button onClick={addEmployee} disabled={isProcessing} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-sm hover:bg-slate-800 transition shadow-lg disabled:opacity-50">
+                {isProcessing ? 'Registering...' : 'Register Employee'}
               </button>
             </div>
           </div>
@@ -175,7 +206,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                         </td>
                         <td className="px-8 py-6 text-right space-x-3">
                           <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-xs uppercase hover:underline">View Logs</button>
-                          <button onClick={() => onUpdate({...state, employees: state.employees.filter(x => x.id !== emp.id)})} className="text-red-300 hover:text-red-500 transition-colors">
+                          <button onClick={() => removeEmployee(emp.id)} className="text-red-300 hover:text-red-500 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                           </button>
                         </td>

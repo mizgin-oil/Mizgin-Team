@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { AppState, Employee } from '../types';
+import { supabase } from '../services/supabase';
 
 interface LoginProps {
   state: AppState;
@@ -10,16 +11,18 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     // Admin Hardcoded Check
     if (email === 'mizgin.oil.duhok@gmail.com' && password === '@@##2323@#@#') {
       onLogin({
-        id: 'admin-root',
+        id: '00000000-0000-0000-0000-000000000000', // Root Admin UUID
         name: 'Super Admin',
         role: 'admin',
         email,
@@ -27,15 +30,28 @@ export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
         jobTitle: 'Director',
         categoryId: 'admin'
       });
+      setIsLoading(false);
       return;
     }
 
-    // Employee Check
-    const found = state.employees.find(e => e.email === email && e.password === password);
-    if (found) {
-      onLogin(found);
-    } else {
-      setError('Invalid credentials. Please try again or contact your administrator.');
+    // Supabase Employee Check
+    try {
+      const { data, error: sbError } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
+
+      if (sbError || !data) {
+        setError('Invalid credentials. Please try again or contact your administrator.');
+      } else {
+        onLogin(data as Employee);
+      }
+    } catch (err) {
+      setError('Connection error. Please check your internet.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,7 +75,8 @@ export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
               <input
                 required
                 type="email"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800"
+                disabled={isLoading}
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800 disabled:opacity-50"
                 placeholder="name@mizgin-oil.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -70,7 +87,8 @@ export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
               <input
                 required
                 type="password"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800"
+                disabled={isLoading}
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800 disabled:opacity-50"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -80,14 +98,15 @@ export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 active:scale-[0.98] transition-all"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            Sign In
+            {isLoading ? 'Authenticating...' : 'Sign In'}
           </button>
           
           <div className="text-center">
             <p className="text-slate-400 text-xs">
-              Mizgin Oil © {new Date().getFullYear()} • Authorized Access Only
+              Mizgin Oil • Supabase Integration Enabled
             </p>
           </div>
         </form>
