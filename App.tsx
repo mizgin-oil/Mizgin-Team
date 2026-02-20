@@ -19,7 +19,6 @@ const App: React.FC = () => {
     workLogs: []
   });
   const [view, setView] = useState<AppView>('landing');
-  const [targetPortal, setTargetPortal] = useState<'admin' | 'employee' | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -60,7 +59,7 @@ const App: React.FC = () => {
       localStorage.removeItem('mizgin_user');
       if (view !== 'login') setView('landing');
     }
-  }, [state.currentUser]);
+  }, [state.currentUser, view]);
 
   const handleLogin = (user: Employee) => {
     setState(prev => ({ ...prev, currentUser: user }));
@@ -70,11 +69,9 @@ const App: React.FC = () => {
     clearUser();
     setState(prev => ({ ...prev, currentUser: null }));
     setView('landing');
-    setTargetPortal(null);
   };
 
   const handlePortalSelect = (selectedRole: 'admin' | 'employee') => {
-    setTargetPortal(selectedRole);
     if (!state.currentUser) {
       setView('login');
     } else {

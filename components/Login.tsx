@@ -1,14 +1,13 @@
 
 import React, { useState } from 'react';
-import { AppState, Employee } from '../types';
+import { Employee } from '../types';
 import { supabase } from '../services/supabase';
 
 interface LoginProps {
-  state: AppState;
   onLogin: (user: Employee) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +47,7 @@ export const Login: React.FC<LoginProps> = ({ state, onLogin }) => {
       } else {
         onLogin(data as Employee);
       }
-    } catch (err) {
+    } catch {
       setError('Connection error. Please check your internet.');
     } finally {
       setIsLoading(false);

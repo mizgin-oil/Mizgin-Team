@@ -15,7 +15,7 @@ export const WorkCalendar: React.FC<WorkCalendarProps> = ({ logs, month = new Da
   const startDay = startOfMonth.getDay();
   
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const padding = Array.from({ length: startDay }, (_, i) => null);
+  const padding = Array.from({ length: startDay }, () => null);
 
   const getLogsForDay = (day: number) => {
     return logs.filter(log => {

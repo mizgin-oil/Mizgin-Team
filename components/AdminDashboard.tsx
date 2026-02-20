@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppState, Employee, JobCategory, WorkLog } from '../types';
+import { AppState, WorkLog } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { WorkCalendar } from './WorkCalendar';
 import { supabase } from '../services/supabase';
