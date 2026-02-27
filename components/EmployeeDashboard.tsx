@@ -16,6 +16,12 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
   const [analysis, setAnalysis] = useState<{summary: string, totalHours: number, insight: string} | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Mizgin Oil Facility Coordinates (Approximate center from provided map link)
+  const TARGET_LAT = 36.866444;
+  const TARGET_LNG = 42.949639;
+  const ALLOWED_RADIUS_METERS = 100; // ~100m radius to cover the 15,505 m² area
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -49,22 +55,65 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
     return calculateHours(monthLogs);
   };
 
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // in metres
+  };
+
   const handleCheckInOut = async () => {
     setIsProcessing(true);
-    if (currentSession) {
-      const { error } = await supabase
-        .from('work_logs')
-        .update({ checkOut: new Date().toISOString() })
-        .eq('id', currentSession.id);
-      if (error) alert(error.message);
-    } else {
-      const { error } = await supabase
-        .from('work_logs')
-        .insert([{ employeeId: user.id, checkIn: new Date().toISOString() }]);
-      if (error) alert(error.message);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      setIsProcessing(false);
+      return;
     }
-    onUpdate();
-    setIsProcessing(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const distance = calculateDistance(latitude, longitude, TARGET_LAT, TARGET_LNG);
+
+        if (distance > ALLOWED_RADIUS_METERS) {
+          setLocationError(`Access Denied: You are ${Math.round(distance)}m away from the facility. Please move closer to check in/out.`);
+          setIsProcessing(false);
+          return;
+        }
+
+        if (currentSession) {
+          const { error } = await supabase
+            .from('work_logs')
+            .update({ checkOut: new Date().toISOString() })
+            .eq('id', currentSession.id);
+          if (error) alert(error.message);
+        } else {
+          const { error } = await supabase
+            .from('work_logs')
+            .insert([{ employeeId: user.id, checkIn: new Date().toISOString() }]);
+          if (error) alert(error.message);
+        }
+        onUpdate();
+        setIsProcessing(false);
+      },
+      (error) => {
+        let msg = "Could not verify your location.";
+        if (error.code === error.PERMISSION_DENIED) msg = "Location permission denied. Please allow location access to check in/out.";
+        setLocationError(msg);
+        setIsProcessing(false);
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   const getAnalysis = async () => {
@@ -119,6 +168,13 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
               <div className="mt-6 flex items-center space-x-2 text-green-600 font-bold bg-green-50 px-4 py-2 rounded-full border border-green-100">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 <span className="text-sm">Active since {formatTime(currentSession.checkIn)}</span>
+              </div>
+            )}
+
+            {locationError && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start space-x-3 text-left max-w-sm">
+                <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <p className="text-xs font-bold text-red-600 leading-relaxed">{locationError}</p>
               </div>
             )}
           </div>

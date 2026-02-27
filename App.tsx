@@ -131,7 +131,6 @@ const App: React.FC = () => {
     <Layout 
       user={state.currentUser} 
       onLogout={handleLogout}
-      onSwitchPortal={state.currentUser?.role === 'admin' && view !== 'landing' ? handleBackToLanding : undefined}
     >
       {!isDataLoaded && view !== 'landing' && view !== 'login' ? (
          <div className="flex flex-col items-center justify-center py-20">
