@@ -32,10 +32,23 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
   };
 
   const removeCategory = async (id: string) => {
-    if (!confirm('Remove this category?')) return;
-    const { error } = await supabase.from('categories').delete().eq('id', id);
-    if (error) alert(error.message);
-    else onUpdate();
+    if (!confirm('Remove this category? Employees in this category will become uncategorized.')) return;
+    
+    setIsProcessing(true);
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) {
+        console.error('Delete error:', error);
+        alert(`Could not delete category: ${error.message}`);
+      } else {
+        await onUpdate();
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('An unexpected error occurred while deleting.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const addEmployee = async () => {
@@ -77,19 +90,62 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
   const selectedEmployee = state.employees.find(e => e.id === selectedEmployeeId);
   const employeeLogs = state.workLogs.filter(l => l.employeeId === selectedEmployeeId);
 
+  const onlineEmployees = state.employees.filter(emp => 
+    state.workLogs.some(l => l.employeeId === emp.id && !l.checkOut)
+  );
+
   return (
     <div className="space-y-8">
+      {/* Live Status Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex items-center space-x-4">
+          <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
+            <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+          </div>
+          <div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Online Now</p>
+            <h3 className="text-2xl font-black text-slate-800">{onlineEmployees.length}</h3>
+            {onlineEmployees.length > 0 && (
+              <p className="text-[10px] text-green-600 font-bold truncate max-w-[150px]">
+                {onlineEmployees.map(e => e.name).join(', ')}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex items-center space-x-4">
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          </div>
+          <div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Total Staff</p>
+            <h3 className="text-2xl font-black text-slate-800">{state.employees.length}</h3>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex items-center space-x-4">
+          <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </div>
+          <div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Categories</p>
+            <h3 className="text-2xl font-black text-slate-800">{state.categories.length}</h3>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
           {(['employees', 'categories', 'reports'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSelectedEmployeeId(null); }}
-              className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
+              className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all flex items-center space-x-2 ${
                 activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {tab}
+              {tab === 'employees' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>}
+              {tab === 'categories' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>}
+              {tab === 'reports' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
+              <span>{tab}</span>
             </button>
           ))}
         </div>
@@ -131,8 +187,13 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                 <span className="font-bold text-slate-700">{c.name}</span>
                 <button 
                   onClick={() => removeCategory(c.id)}
-                  className="text-slate-300 hover:text-red-500 transition-colors"
+                  disabled={isProcessing}
+                  className="flex items-center space-x-1 text-slate-300 hover:text-red-500 transition-all px-2 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                  title="Delete Category"
                 >
+                  <span className="text-[10px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isProcessing ? '...' : 'Delete'}
+                  </span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -160,62 +221,128 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
             </div>
           </div>
 
-          <div className="xl:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-black text-slate-800">Team Directory</h2>
-              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">{state.employees.length} Staff members</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-widest border-b border-slate-100">
-                  <tr>
-                    <th className="px-8 py-4">Employee</th>
-                    <th className="px-8 py-4">Status</th>
-                    <th className="px-8 py-4">Category</th>
-                    <th className="px-8 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {state.employees.map(emp => {
-                    const isOnline = state.workLogs.some(l => l.employeeId === emp.id && !l.checkOut);
-                    return (
-                      <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-8 py-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-slate-400">{emp.name.charAt(0)}</div>
-                            <div>
-                              <p className="font-bold text-slate-800">{emp.name}</p>
-                              <p className="text-xs text-slate-400">{emp.jobTitle}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6">
-                          {isOnline ? (
-                            <span className="flex items-center text-green-600 font-black text-[10px] uppercase">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                              On Duty
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 font-bold text-[10px] uppercase">Away</span>
-                          )}
-                        </td>
-                        <td className="px-8 py-6">
-                          <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[10px] font-black uppercase">
-                            {state.categories.find(c => c.id === emp.categoryId)?.name || 'General'}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right space-x-3">
-                          <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-xs uppercase hover:underline">View Logs</button>
-                          <button onClick={() => removeEmployee(emp.id)} className="text-red-300 hover:text-red-500 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {state.employees.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">No active personnel records.</div>}
+          <div className="xl:col-span-2 space-y-8">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black text-slate-800">Team Directory</h2>
+                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">{state.employees.length} Staff members</span>
+              </div>
+
+              <div className="space-y-10">
+                {state.categories.map(category => {
+                  const categoryEmployees = state.employees.filter(e => e.categoryId === category.id);
+                  if (categoryEmployees.length === 0) return null;
+
+                  return (
+                    <div key={category.id} className="space-y-4">
+                      <div className="flex items-center space-x-2 border-b border-slate-100 pb-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">{category.name}</h3>
+                        <span className="text-[10px] font-bold text-slate-300">({categoryEmployees.length})</span>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-slate-50/50 text-slate-400 font-black uppercase text-[9px] tracking-widest">
+                            <tr>
+                              <th className="px-4 py-3">Employee</th>
+                              <th className="px-4 py-3">Status</th>
+                              <th className="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-50">
+                            {categoryEmployees.map(emp => {
+                              const isOnline = state.workLogs.some(l => l.employeeId === emp.id && !l.checkOut);
+                              return (
+                                <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-4 py-4">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center font-black text-slate-400 text-xs">{emp.name.charAt(0)}</div>
+                                      <div>
+                                        <p className="font-bold text-slate-800 text-xs">{emp.name}</p>
+                                        <p className="text-[10px] text-slate-400">{emp.jobTitle}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    {isOnline ? (
+                                      <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                        On Duty
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-300 font-bold text-[9px] uppercase">Away</span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-4 text-right space-x-2">
+                                    <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-[10px] uppercase hover:underline">Logs</button>
+                                    <button onClick={() => removeEmployee(emp.id)} className="text-red-300 hover:text-red-500 transition-colors">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {state.employees.filter(e => !e.categoryId || !state.categories.find(c => c.id === e.categoryId)).length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 border-b border-slate-100 pb-2">
+                      <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Uncategorized</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <tbody className="divide-y divide-slate-50">
+                          {state.employees.filter(e => !e.categoryId || !state.categories.find(c => c.id === e.categoryId)).map(emp => {
+                            const isOnline = state.workLogs.some(l => l.employeeId === emp.id && !l.checkOut);
+                            return (
+                              <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center font-black text-slate-400 text-xs">{emp.name.charAt(0)}</div>
+                                    <div>
+                                      <p className="font-bold text-slate-800 text-xs">{emp.name}</p>
+                                      <p className="text-[10px] text-slate-400">{emp.jobTitle}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4">
+                                  {isOnline ? (
+                                    <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
+                                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                      On Duty
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-300 font-bold text-[9px] uppercase">Away</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-4 text-right space-x-2">
+                                  <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-[10px] uppercase hover:underline">Logs</button>
+                                  <button onClick={() => removeEmployee(emp.id)} className="text-red-300 hover:text-red-500 transition-colors">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {state.employees.length === 0 && (
+                  <div className="p-16 text-center text-slate-400 font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    No active personnel records found.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

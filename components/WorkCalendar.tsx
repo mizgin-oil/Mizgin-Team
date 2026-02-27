@@ -35,6 +35,12 @@ export const WorkCalendar: React.FC<WorkCalendarProps> = ({ logs, month = new Da
     }, 0);
   };
 
+  const formatDayDuration = (totalHours: number) => {
+    const h = Math.floor(totalHours);
+    const m = Math.round((totalHours - h) * 60);
+    return `${h}h ${m}m`;
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center">
@@ -61,8 +67,8 @@ export const WorkCalendar: React.FC<WorkCalendarProps> = ({ logs, month = new Da
               {hours > 0 && (
                 <div className="mt-1 flex flex-col space-y-1">
                   <div className="bg-blue-600 h-1.5 w-full rounded-full opacity-20"></div>
-                  <span className="text-[10px] font-black text-blue-700 block text-center">
-                    {hours.toFixed(1)}h
+                  <span className="text-[9px] font-black text-blue-700 block text-center leading-tight">
+                    {formatDayDuration(hours)}
                   </span>
                 </div>
               )}

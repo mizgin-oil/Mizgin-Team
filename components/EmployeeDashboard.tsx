@@ -76,6 +76,19 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
 
   const formatTime = (isoString: string) => new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  const formatDuration = (start: string, end: string) => {
+    const diffMs = new Date(end).getTime() - new Date(start).getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${diffHrs}h ${diffMins}m`;
+  };
+
+  const formatDayDuration = (totalHours: number) => {
+    const h = Math.floor(totalHours);
+    const m = Math.round((totalHours - h) * 60);
+    return `${h}h ${m}m`;
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Clock & Action Section */}
@@ -118,16 +131,14 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
               <div>
                 <p className="text-slate-500 text-xs font-bold mb-1">THIS WEEK</p>
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-800">{getWeeklyHours().toFixed(1)}</span>
-                  <span className="text-slate-400 font-medium text-sm">hours</span>
+                  <span className="text-3xl font-black text-slate-800">{formatDayDuration(getWeeklyHours())}</span>
                 </div>
               </div>
               <div className="h-px bg-slate-100"></div>
               <div>
                 <p className="text-slate-500 text-xs font-bold mb-1">THIS MONTH</p>
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-blue-600">{getMonthlyHours().toFixed(1)}</span>
-                  <span className="text-slate-400 font-medium text-sm">hours</span>
+                  <span className="text-3xl font-black text-blue-600">{formatDayDuration(getMonthlyHours())}</span>
                 </div>
               </div>
             </div>
@@ -198,7 +209,7 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
                         <td className="px-6 py-4 text-right">
                           <span className={`font-black ${log.checkOut ? 'text-blue-600' : 'text-slate-300 italic'}`}>
                             {log.checkOut 
-                              ? ((new Date(log.checkOut).getTime() - new Date(log.checkIn).getTime()) / (1000 * 60 * 60)).toFixed(1) + 'h'
+                              ? formatDuration(log.checkIn, log.checkOut)
                               : '--'
                             }
                           </span>
