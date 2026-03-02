@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { clearUser } from './store';
 import { AppState, Employee } from './types';
