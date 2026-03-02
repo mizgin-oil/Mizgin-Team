@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppState, WorkLog } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { WorkCalendar } from './WorkCalendar';
@@ -14,6 +14,12 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'employees' | 'categories' | 'reports'>('employees');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   
   // Forms
   const [newCat, setNewCat] = useState('');
@@ -87,6 +93,13 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
     hours: parseFloat(calculateHours(state.workLogs.filter(l => l.employeeId === emp.id)).toFixed(2))
   }));
 
+  const getLiveDuration = (checkIn: string) => {
+    const diff = now.getTime() - new Date(checkIn).getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
   const selectedEmployee = state.employees.find(e => e.id === selectedEmployeeId);
   const employeeLogs = state.workLogs.filter(l => l.employeeId === selectedEmployeeId);
 
@@ -106,9 +119,16 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Online Now</p>
             <h3 className="text-2xl font-black text-slate-800">{onlineEmployees.length}</h3>
             {onlineEmployees.length > 0 && (
-              <p className="text-[10px] text-green-600 font-bold truncate max-w-[150px]">
-                {onlineEmployees.map(e => e.name).join(', ')}
-              </p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {onlineEmployees.map(e => {
+                  const log = state.workLogs.find(l => l.employeeId === e.id && !l.checkOut);
+                  return (
+                    <span key={e.id} className="text-[9px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-md font-bold border border-green-100">
+                      {e.name} ({log ? getLiveDuration(log.checkIn) : '...'})
+                    </span>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -266,10 +286,15 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                                   </td>
                                   <td className="px-4 py-4">
                                     {isOnline ? (
-                                      <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                                        On Duty
-                                      </span>
+                                      <div className="flex flex-col">
+                                        <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
+                                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                          On Duty
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-500 ml-3.5">
+                                          {getLiveDuration(state.workLogs.find(l => l.employeeId === emp.id && !l.checkOut)!.checkIn)}
+                                        </span>
+                                      </div>
                                     ) : (
                                       <span className="text-slate-300 font-bold text-[9px] uppercase">Away</span>
                                     )}
@@ -314,10 +339,15 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                                 </td>
                                 <td className="px-4 py-4">
                                   {isOnline ? (
-                                    <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
-                                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                                      On Duty
-                                    </span>
+                                    <div className="flex flex-col">
+                                      <span className="flex items-center text-green-600 font-black text-[9px] uppercase">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                        On Duty
+                                      </span>
+                                      <span className="text-[10px] font-bold text-slate-500 ml-3.5">
+                                        {getLiveDuration(state.workLogs.find(l => l.employeeId === emp.id && !l.checkOut)!.checkIn)}
+                                      </span>
+                                    </div>
                                   ) : (
                                     <span className="text-slate-300 font-bold text-[9px] uppercase">Away</span>
                                   )}
@@ -440,9 +470,16 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                         <p className="font-bold text-slate-800 text-sm">{emp?.name || 'Unknown'}</p>
                         <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{new Date(log.checkIn).toLocaleString()}</p>
                       </div>
-                      <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${!log.checkOut ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}>
-                        {!log.checkOut ? 'In' : 'Out'}
-                      </span>
+                      <div className="flex items-center space-x-3">
+                        {!log.checkOut && (
+                          <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                            {getLiveDuration(log.checkIn)}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${!log.checkOut ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}>
+                          {!log.checkOut ? 'In' : 'Out'}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
