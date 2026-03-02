@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { clearUser } from './store';
 import { AppState, Employee } from './types';
 import { Layout } from './components/Layout';
@@ -108,7 +109,7 @@ const App: React.FC = () => {
             onClick={handleBackToLanding}
             className="flex items-center text-slate-500 hover:text-blue-600 transition-colors font-bold text-sm"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+            <ChevronLeft className="w-4 h-4 mr-1" />
             Portal Selection
           </button>
           <Login state={state} onLogin={handleLogin} />

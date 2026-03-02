@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppState, Employee, WorkLog } from '../types';
 import { analyzeWorkEfficiency } from '../services/geminiService';
+import { Zap, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { WorkCalendar } from './WorkCalendar';
 import { supabase } from '../services/supabase';
 
@@ -173,7 +173,7 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
 
             {locationError && (
               <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start space-x-3 text-left max-w-sm">
-                <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <p className="text-xs font-bold text-red-600 leading-relaxed">{locationError}</p>
               </div>
             )}
@@ -202,7 +202,7 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
 
           <div className="bg-slate-900 p-6 rounded-2xl shadow-lg text-white">
             <h3 className="text-sm font-bold mb-3 flex items-center uppercase tracking-wider text-blue-400">
-               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+               <Zap className="w-4 h-4 mr-2" />
                AI Performance
             </h3>
             {!analysis && !loadingAnalysis && (
@@ -225,7 +225,7 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <div className="space-y-4">
           <h2 className="text-xl font-black text-slate-800 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <Calendar className="w-5 h-5 mr-2 text-blue-600" />
             Work Calendar
           </h2>
           <WorkCalendar logs={myLogs} />
@@ -233,7 +233,7 @@ export const EmployeeDashboard: React.FC<Props> = ({ state, user, onUpdate }) =>
 
         <div className="space-y-4">
           <h2 className="text-xl font-black text-slate-800 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <Clock className="w-5 h-5 mr-2 text-blue-600" />
             Session History
           </h2>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

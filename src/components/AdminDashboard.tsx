@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppState, WorkLog } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Users, LayoutGrid, FileText, Trash2, ArrowLeft, Calendar } from 'lucide-react';
 import { WorkCalendar } from './WorkCalendar';
 import { supabase } from '../services/supabase';
 
@@ -134,7 +134,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
         </div>
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex items-center space-x-4">
           <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Total Staff</p>
@@ -143,7 +143,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
         </div>
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex items-center space-x-4">
           <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <LayoutGrid className="w-6 h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Categories</p>
@@ -162,9 +162,9 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                 activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {tab === 'employees' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>}
-              {tab === 'categories' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>}
-              {tab === 'reports' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
+              {tab === 'employees' && <Users className="w-4 h-4" />}
+              {tab === 'categories' && <LayoutGrid className="w-4 h-4" />}
+              {tab === 'reports' && <FileText className="w-4 h-4" />}
               <span>{tab}</span>
             </button>
           ))}
@@ -175,7 +175,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
             onClick={() => setSelectedEmployeeId(null)}
             className="flex items-center text-blue-600 font-bold text-sm hover:underline"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Back to List
           </button>
         )}
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                   <span className="text-[10px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
                     {isProcessing ? '...' : 'Delete'}
                   </span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             ))}
@@ -302,7 +302,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
                                   <td className="px-4 py-4 text-right space-x-2">
                                     <button onClick={() => setSelectedEmployeeId(emp.id)} className="text-blue-600 font-black text-[10px] uppercase hover:underline">Logs</button>
                                     <button onClick={() => removeEmployee(emp.id)} className="text-red-300 hover:text-red-500 transition-colors">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                      <Trash2 className="w-4 h-4" />
                                     </button>
                                   </td>
                                 </tr>
@@ -404,7 +404,7 @@ export const AdminDashboard: React.FC<Props> = ({ state, onUpdate }) => {
           <div className="xl:col-span-2 space-y-8">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
               <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <Calendar className="w-5 h-5 mr-2 text-blue-600" />
                 Attendance Calendar
               </h3>
               <WorkCalendar logs={employeeLogs} />

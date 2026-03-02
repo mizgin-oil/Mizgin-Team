@@ -1,20 +1,69 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Mizgin Oil Team Management System
 
-# Run and deploy your AI Studio app
+A professional employee time-tracking and management system for Mizgin Oil's team.
 
-This contains everything you need to run your app locally.
+## 🚀 Deployment on Vercel
 
-View your app in AI Studio: https://ai.studio/apps/8d5df25f-bc41-4090-987f-0c58bd862579
+This application is optimized for Vercel deployment with Supabase integration.
 
-## Run Locally
+### 1. Supabase Setup
+Run the following SQL in your Supabase SQL Editor to set up the database:
 
-**Prerequisites:**  Node.js
+```sql
+-- Create tables and policies
+CREATE TABLE categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
+CREATE TABLE employees (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    job_title TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT CHECK (role IN ('admin', 'employee')) DEFAULT 'employee',
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+CREATE TABLE work_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    employee_id UUID REFERENCES employees(id) ON DELETE CASCADE NOT NULL,
+    check_in TIMESTAMPTZ DEFAULT now() NOT NULL,
+    check_out TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_logs ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Allow public read categories" ON categories FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage categories" ON categories FOR ALL USING (true);
+CREATE POLICY "Allow public read employees" ON employees FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage employees" ON employees FOR ALL USING (true);
+CREATE POLICY "Allow public read work_logs" ON work_logs FOR SELECT USING (true);
+CREATE POLICY "Allow public insert work_logs" ON work_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update work_logs" ON work_logs FOR UPDATE USING (true);
+CREATE POLICY "Allow admin delete work_logs" ON work_logs FOR DELETE USING (true);
+
+-- Seed Admin
+INSERT INTO employees (name, job_title, email, password, role)
+VALUES ('Super Admin', 'Director', 'mizgin.oil.duhok@gmail.com', '@@##2323@#@#', 'admin');
+```
+
+### 2. Vercel Configuration
+1. Connect your GitHub repository to Vercel.
+2. Install the **Supabase Integration** on Vercel for your project.
+3. The app will automatically detect `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+4. Add `GEMINI_API_KEY` to your Vercel environment variables for AI features.
+
+## 🛠️ Features
+- **Geofenced Check-in/out**: Employees must be within 100m of the facility.
+- **Admin Dashboard**: Manage staff, categories, and view live attendance.
+- **AI Performance Analysis**: Get insights into work patterns using Gemini.
+- **Responsive Design**: Works perfectly on mobile and desktop.
