@@ -1,5 +1,5 @@
 
-import { AppState } from '@/types';
+import { AppState } from './types';
 
 const STORAGE_KEY = 'mizgin_app_data';
 
