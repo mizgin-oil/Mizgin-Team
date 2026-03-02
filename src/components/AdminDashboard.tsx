@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppState, WorkLog } from '@/types';
+import { AppState, WorkLog } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { WorkCalendar } from '@/components/WorkCalendar';
-import { supabase } from '@/services/supabase';
+import { WorkCalendar } from './WorkCalendar';
+import { supabase } from '../services/supabase';
 
 interface Props {
   state: AppState;

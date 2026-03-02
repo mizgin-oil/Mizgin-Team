@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { WorkLog } from '@/types';
+import { WorkLog } from '../types';
 
 interface WorkCalendarProps {
   logs: WorkLog[];

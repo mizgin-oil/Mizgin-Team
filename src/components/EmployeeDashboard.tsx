@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppState, Employee, WorkLog } from '@/types';
-import { analyzeWorkEfficiency } from '@/services/geminiService';
-import { WorkCalendar } from '@/components/WorkCalendar';
-import { supabase } from '@/services/supabase';
+import { AppState, Employee, WorkLog } from '../types';
+import { analyzeWorkEfficiency } from '../services/geminiService';
+import { WorkCalendar } from './WorkCalendar';
+import { supabase } from '../services/supabase';
 
 interface Props {
   state: AppState;

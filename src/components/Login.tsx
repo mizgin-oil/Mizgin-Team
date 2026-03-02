@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Employee } from '@/types';
-import { supabase } from '@/services/supabase';
+import { Employee } from '../types';
+import { supabase } from '../services/supabase';
 
 interface LoginProps {
   onLogin: (user: Employee) => void;
