@@ -12,11 +12,23 @@ import { supabase } from '@/services/supabase';
 type AppView = 'landing' | 'login' | 'admin_dash' | 'employee_dash';
 
 const App: React.FC = () => {
-  const [state, setState] = useState<AppState>({
-    currentUser: JSON.parse(localStorage.getItem('mizgin_user') || 'null'),
-    employees: [],
-    categories: [],
-    workLogs: []
+  const [state, setState] = useState<AppState>(() => {
+    let currentUser = null;
+    try {
+      const saved = localStorage.getItem('mizgin_user');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        currentUser = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to parse user from storage', e);
+    }
+    
+    return {
+      currentUser,
+      employees: [],
+      categories: [],
+      workLogs: []
+    };
   });
   const [view, setView] = useState<AppView>('landing');
   const [isDataLoaded, setIsDataLoaded] = useState(false);
