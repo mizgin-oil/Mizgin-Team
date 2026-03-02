@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { clearUser } from './store';
-import { AppState, Employee } from './types';
-import { Layout } from './components/Layout';
-import { Login } from './components/Login';
-import { AdminDashboard } from './components/AdminDashboard';
-import { EmployeeDashboard } from './components/EmployeeDashboard';
-import { PortalSelection } from './components/PortalSelection';
-import { supabase } from './services/supabase';
+import { clearUser } from '@/store';
+import { AppState, Employee } from '@/types';
+import { Layout } from '@/components/Layout';
+import { Login } from '@/components/Login';
+import { AdminDashboard } from '@/components/AdminDashboard';
+import { EmployeeDashboard } from '@/components/EmployeeDashboard';
+import { PortalSelection } from '@/components/PortalSelection';
+import { supabase } from '@/services/supabase';
 
 type AppView = 'landing' | 'login' | 'admin_dash' | 'employee_dash';
 
