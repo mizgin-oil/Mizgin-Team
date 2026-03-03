@@ -29,7 +29,14 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 2000,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              vendor: ['react', 'react-dom', 'recharts', '@supabase/supabase-js', 'lucide-react'],
+            },
+          },
+        },
       }
     };
 });
