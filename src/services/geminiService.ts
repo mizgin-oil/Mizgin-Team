@@ -2,10 +2,23 @@
 import { GoogleGenAI } from "@google/genai";
 import { Employee, WorkLog } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAi = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const analyzeWorkEfficiency = async (logs: WorkLog[], user: Employee) => {
-  if (!process.env.GEMINI_API_KEY) {
+  const ai = getAi();
+  
+  if (!ai) {
     return {
       summary: "AI analysis unavailable (API key missing).",
       totalHours: 0,
