@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { clearUser } from './store';
 import { AppState, Employee } from './types';
 import { Layout } from './components/Layout';
 import { Login } from './components/Login';
@@ -74,7 +73,6 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    clearUser();
     setState(prev => ({ ...prev, currentUser: null }));
     setView('landing');
   };
