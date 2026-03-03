@@ -2,9 +2,9 @@
 
 A professional employee time-tracking and management system for Mizgin Oil's team.
 
-## 🚀 Deployment on Vercel
+## 🚀 Deployment
 
-This application is optimized for Vercel deployment with Supabase integration.
+This application is optimized for deployment with Supabase integration.
 
 ### 1. Supabase Setup
 Run the following SQL in your Supabase SQL Editor to set up the database:
@@ -56,11 +56,9 @@ INSERT INTO employees (name, job_title, email, password, role)
 VALUES ('Super Admin', 'Director', 'mizgin.oil.duhok@gmail.com', '@@##2323@#@#', 'admin');
 ```
 
-### 2. Vercel Configuration
-1. Connect your GitHub repository to Vercel.
-2. Install the **Supabase Integration** on Vercel for your project.
-3. The app will automatically detect `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-4. Add `GEMINI_API_KEY` to your Vercel environment variables for AI features.
+### 2. Configuration
+1. Set up your environment variables for `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+2. Add `GEMINI_API_KEY` to your environment variables for AI features.
 
 ## 🛠️ Features
 - **Geofenced Check-in/out**: Employees must be within 100m of the facility.
